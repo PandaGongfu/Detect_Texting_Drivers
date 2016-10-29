@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"
+          rel="stylesheet">
+    <meta charset="utf-8">
+    <style>
+
+    .counties {
+      fill: none;
+    }
+
+    .states {
+      fill: none;
+      stroke: #fff;
+      stroke-linejoin: round;
+    }
+
+    .q0-9 { fill:rgb(247,251,255); }
+    .q1-9 { fill:rgb(222,235,247); }
+    .q2-9 { fill:rgb(198,219,239); }
+    .q3-9 { fill:rgb(158,202,225); }
+    .q4-9 { fill:rgb(107,174,214); }
+    .q5-9 { fill:rgb(66,146,198); }
+    .q6-9 { fill:rgb(33,113,181); }
+    .q7-9 { fill:rgb(8,81,156); }
+    .q8-9 { fill:rgb(8,48,107); }
+
+    </style>
+    
+    <script src="//d3js.org/d3.v4.min.js"></script>
+    <script src="//d3js.org/topojson.v1.min.js"></script>
+  </head>
+
+
+  <body>  
+    <div class="container">
+    <div class="header">
+      <h1 style="font-size: 200%;text-align:center;color:steelblue";>Vehicle-related Casulties By County</h1>
+
+    </div>
+
+    <div id="chart"  align="center"></div>
+    <script>
+        var svg = d3.select("#chart").append("svg")
+                    .attr("width", 1000)
+                    .attr("height", 600);
+        var width = 1000;
+        var height = 600;
+
+
+        var rateById = d3.map();
+
+        var quantize = d3.scaleQuantize()
+            .domain([0, 250])
+            .range(d3.range(9).map(function(i) { return "q" + i + "-9"; }));
+
+        var projection = d3.geoAlbersUsa()
+            .scale(1280)
+            .translate([width / 2, height / 2]);
+
+        var path = d3.geoPath()
+            .projection(projection);
+
+        d3.queue()
+            .defer(d3.json, "{{url_for('static', filename="us.json")}}")
+            .defer(d3.csv, "{{url_for('static',filename="vehicle_death.csv")}}", function(d) { rateById.set(d.id, +d.rate); })
+            .await(ready);
+
+
+        function ready(error, us) {
+          if (error) throw error;
+
+          svg.append("g")
+              .attr("class", "counties")
+            .selectAll("path")
+              .data(topojson.feature(us, us.objects.counties).features)
+            .enter().append("path")
+              .attr("class", function(d) { return quantize(rateById.get(d.id)); })
+              .attr("d", path);
+
+          svg.append("path")
+              .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+              .attr("class", "states")
+              .attr("d", path);
+
+        }
+        </script>     
+
+    <div class="container">
+    <div class="header">
+      <h1 style="font-size: 300%;text-align:center;color:orangered;background-color:lightsteelblue">Is the driver texting?</h1>
+    </div>
+    <hr/>
+    <div>
+      
+    <div class="header">
+      <h1 class="text-muted">Display Image</h1>
+    </div>
+    <form action="upload" method="post" enctype="multipart/form-data">
+      <input type="file" name="file"><br /><br />
+      <input type="submit" value="Display">
+    </form>
+    </div>
+    <hr/>
+    <div>
+
+    <div class="header">
+      <h1 class="text-muted">Classify Drivers</h1>
+    </div>
+    <form action="classify" method="POST" enctype="multipart/form-data">
+      <input id="filename" type="file" name="file"><br /><br />
+      <input id="analyze" type="submit" value="Analyze">
+
+    </form>
+    </div>
+    </div>
+  </body>
+
+</html>
