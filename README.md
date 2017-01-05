@@ -9,5 +9,7 @@ Bag of Visual Words is a model that translates local features of an image into a
 3. Describe image using a histogram of visual words. 
 4. Develop a web app to upload an image and classify it at real-time.  
 
-Code for step 1 is included in scripts. Code for steps 2-4 is included in jupyter_notebooks.    
+Code for step 1 is included in scripts. Code for steps 2-4 is included in jupyter_notebooks.  
+
+![screen_shot](images/texting_driver_app.png)
    
