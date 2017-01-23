@@ -135,7 +135,6 @@
               success: function(response) {
                   var img_name = response['img'];
                   var res_txt = response['res_txt'];
-                  console.log(img_name)
 
                   var eventDataBaseUrl = "{{ url_for('send_image', filename='DUMMY_VALUE') }}"; 
                   var actualDataUrl = eventDataBaseUrl.replace(/DUMMY_VALUE/, String(img_name)); 
