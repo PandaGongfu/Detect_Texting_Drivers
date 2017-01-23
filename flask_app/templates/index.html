@@ -26,10 +26,18 @@
     .q7-9 { fill:rgb(8,81,156); }
     .q8-9 { fill:rgb(8,48,107); }
 
+
+    .bar {
+       fill: white;
+     }
+
     </style>
     
+    <!-- <svg width="960" height="600"></svg> -->
     <script src="//d3js.org/d3.v4.min.js"></script>
     <script src="//d3js.org/topojson.v1.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+
   </head>
 
 
@@ -47,7 +55,6 @@
                     .attr("height", 600);
         var width = 1000;
         var height = 600;
-
 
         var rateById = d3.map();
 
@@ -67,7 +74,6 @@
             .defer(d3.csv, "{{url_for('static',filename="vehicle_death.csv")}}", function(d) { rateById.set(d.id, +d.rate); })
             .await(ready);
 
-
         function ready(error, us) {
           if (error) throw error;
 
@@ -85,7 +91,7 @@
               .attr("d", path);
 
         }
-        </script>     
+    </script>     
 
     <div class="container">
     <div class="header">
@@ -94,27 +100,82 @@
     <hr/>
     <div>
       
-    <div class="header">
-      <h1 class="text-muted">Display Image</h1>
-    </div>
-    <form action="upload" method="post" enctype="multipart/form-data">
-      <input type="file" name="file"><br /><br />
-      <input type="submit" value="Display">
+    <form class="analysis_form" action="upload" method="post" enctype="multipart/form-data">
+      <input id="uploadfile" type="file" name="file"><br /><br />
+      <input id="analyze" type="submit" value="Analyze">
     </form>
     </div>
     <hr/>
+
     <div>
-
-    <div class="header">
-      <h1 class="text-muted">Classify Drivers</h1>
+      <img id="imgUpload" width="500" height="400" />
+      <p class="space"></p>
+      <div id="bar_chart" align="left"></div>
+      <p class="space"></p>
     </div>
-    <form action="classify" method="POST" enctype="multipart/form-data">
-      <input id="filename" type="file" name="file"><br /><br />
-      <input id="analyze" type="submit" value="Analyze">
 
-    </form>
-    </div>
-    </div>
-  </body>
 
+  <script>
+
+      $(document).on('submit', '.analysis_form', function(e){
+          e.preventDefault();
+
+          var data = JSON.stringify({
+                    filename: $('#uploadfile').prop("files")[0]['name']
+                 });  
+
+        $.ajax({
+              url: '/classify',
+              type: 'POST',
+              data: data,
+              dataType: "json",
+              contentType: "application/json; charset=utf-8",
+              async: true,
+             
+              success: function(response) {
+                  var img_name = response['img'];
+                  var res_txt = response['res_txt'];
+                  console.log(img_name)
+
+                  var eventDataBaseUrl = "{{ url_for('send_image', filename='DUMMY_VALUE') }}"; 
+                  var actualDataUrl = eventDataBaseUrl.replace(/DUMMY_VALUE/, String(img_name)); 
+                  $('#imgUpload').attr('src', actualDataUrl)
+
+                  d3.select("#result_text")
+                    .attr("x", 200)
+                    .text(res_txt);
+                      },
+              error: function(error){
+              }
+        });
+      });
+
+
+     var chart = d3.select("#bar_chart")
+               .append("svg:svg")
+               .attr("width", 500)
+               .attr("height", 50);
+
+     var bar = chart.append("g")
+                    .attr("class", "bar")
+
+     bar.append("svg:rect")
+          .attr("id", "chancebar")
+          .attr("class", "bar")
+          .attr("width", 500)
+          .attr("height", 50);
+
+     bar.append("text")
+        .attr("id", "result_text")
+        .attr("dy", ".75em")
+        .attr("y", 15)
+        .attr("x", 500)
+        .attr("text-anchor", "middle")
+        .attr("fill", "royalblue")
+        .attr("font-size", 20)
+        .text( "");
+
+  </script>
+
+</body>
 </html>

@@ -4,7 +4,7 @@ import os
 # will be used to redirect the user once the upload is done
 # and send_from_directory will help us to send/show on the
 # browser the file that the user just uploaded
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory
 from werkzeug import secure_filename
 import cv2
 import numpy as np
@@ -51,7 +51,7 @@ def create_sift_features(c_image):
 # value of the operation
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index_update.html')
 
 # Route that will process the file upload
 @app.route('/upload', methods=['POST'])
@@ -79,24 +79,29 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'],
                                filename)
 
+@app.route('/<filename>')
+def send_image(filename):
+    return send_from_directory("images", filename)
+
 # Route that will process the file upload
 @app.route('/classify', methods=['POST'])
 def classify():
-    # Get the name of the uploaded file
-    file = request.files['file']
+    data = request.json
+    filename = data['filename']
+
     # Check if the file is one of the allowed types/extensions
-    if file and allowed_file(file.filename):
+    if allowed_file(filename):
         # Make the filename safe, remove unsupported chars
-        filename = secure_filename(file.filename)
-        # img_str = file.read()
+        filename = secure_filename(filename)
 
         # classify image
         driver_class, driver_prob = predict_image(filename)
         if  driver_class == 'texting':
-            return 'Danger! Driver is texting!'+'   (Prob: '+str(1-driver_prob[0])+')'
+            res_txt = 'Danger! Driver is texting!'+'   (Prob: '+str(1-driver_prob[0])+')'
         else:
-            return 'That\'s a safe driver :-)'+'    (Prob: '+str(driver_prob[0])+')'
+            res_txt = 'That\'s a safe driver :-)'+'    (Prob: '+str(driver_prob[0])+')'
 
+    return jsonify({'img': filename, 'res_txt': res_txt})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8808, debug=True)
+    app.run(host='0.0.0.0', port=5566, debug=True)
